@@ -1,0 +1,7 @@
+selenium
+pymongo
+Flask
+python-dotenv
+webdriver-manager
+requests
+gunicorn

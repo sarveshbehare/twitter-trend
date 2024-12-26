@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitter Trends Scraper</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Twitter Trends Scraper</h1>
+        <button id="runScraperBtn" onclick="runScraper()">Click here to run the script</button>
+        
+        <div id="results" style="display: none;">
+            <h2>Results</h2>
+            <p id="timestamp"></p>
+            <ul id="trendsList"></ul>
+            <p id="ipAddress"></p>
+            
+            <div class="json-container">
+                <h3>MongoDB Record:</h3>
+                <pre id="jsonData"></pre>
+            </div>
+        </div>
+
+        <div id="loading" style="display: none;">
+            Loading... Please wait while we fetch the trends.
+        </div>
+
+        <div id="error" style="display: none;" class="error">
+            An error occurred while fetching the trends.
+        </div>
+    </div>
+
+    <script>
+        function runScraper() {
+            const resultsDiv = document.getElementById('results');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const button = document.getElementById('runScraperBtn');
+
+            resultsDiv.style.display = 'none';
+            loadingDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+            button.disabled = true;
+
+            fetch('/run-scraper')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayResults(data.data);
+                    } else {
+                        throw new Error(data.error);
+                    }
+                })
+                .catch(error => {
+                    errorDiv.style.display = 'block';
+                    errorDiv.textContent = `Error: ${error.message}`;
+                })
+                .finally(() => {
+                    loadingDiv.style.display = 'none';
+                    button.disabled = false;
+                });
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            const timestamp = document.getElementById('timestamp');
+            const trendsList = document.getElementById('trendsList');
+            const ipAddress = document.getElementById('ipAddress');
+            const jsonData = document.getElementById('jsonData');
+
+            // Clear previous results
+            trendsList.innerHTML = '';
+
+            // Display timestamp
+            const date = new Date(data.timestamp.$date);
+            timestamp.textContent = `These are the most happening topics as on ${date.toLocaleString()}`;
+
+            // Display trends
+            for (let i = 1; i <= 5; i++) {
+                const trend = data[`nameoftrend${i}`];
+                const li = document.createElement('li');
+                li.textContent = trend;
+                trendsList.appendChild(li);
+            }
+
+            // Display IP address
+            ipAddress.textContent = `The IP address used for this query was ${data.ip_address}`;
+
+            // Display JSON data
+            jsonData.textContent = JSON.stringify(data, null, 2);
+
+            resultsDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
